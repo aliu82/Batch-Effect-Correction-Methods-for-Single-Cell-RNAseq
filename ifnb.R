@@ -208,5 +208,5 @@ ggplot2::ggplot(asw.df, aes(x,y)) + geom_text_repel(aes(label = names), hjust = 
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.border = element_blank(),
-        panel.background = element_blank())
+        panel.background = element_blank()) 
 

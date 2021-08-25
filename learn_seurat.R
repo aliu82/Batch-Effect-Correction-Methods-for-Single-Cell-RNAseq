@@ -5,6 +5,8 @@ library(dplyr)
 library(Seurat)
 library(patchwork)
 
+### source: https://satijalab.org/seurat/articles/pbmc3k_tutorial.html#setup-the-seurat-object-1 ###
+
 
 ### 1. initialize Seurat object with non-normalized data - 13209 features ###
 pbmc.data <- Read10X(data.dir = "filtered_gene_bc_matrices/hg19/")
@@ -89,6 +91,3 @@ new.cluster.ids <- c("Naive CD4 T", "CD14+ Mono", "Memory CD4 T", "B", "CD8 T", 
 names(new.cluster.ids) <- levels(pbmc)
 pbmc <- RenameIdents(pbmc, new.cluster.ids)
 DimPlot(pbmc, reduction = "umap", label = TRUE, pt.size = 0.5) + NoLegend()
-
-
-### source: https://satijalab.org/seurat/articles/pbmc3k_tutorial.html#setup-the-seurat-object-1 ###

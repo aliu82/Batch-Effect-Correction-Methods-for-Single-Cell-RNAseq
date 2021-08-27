@@ -67,7 +67,6 @@ mean(rcdata$sil.seurat_annotations)         #0.1479373
 ifnb.anchors <- Seurat::FindIntegrationAnchors(object.list = ifnb.list)
 ifnb.integrated <- Seurat::IntegrateData(anchorset = ifnb.anchors)
 
-
 Seurat::DefaultAssay(ifnb.integrated) <- 'integrated'
 ifnb.integrated <- Seurat::ScaleData(ifnb.integrated)
 ifnb.integrated <- Seurat::RunPCA(ifnb.integrated, npcs = 30)

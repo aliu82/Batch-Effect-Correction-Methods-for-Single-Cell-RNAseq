@@ -24,27 +24,27 @@ for (i in 1:length(ifnb.list)) {
 ctrl <- ifnb.list$CTRL
 stim <- ifnb.list$STIM
 
-gcdata <- merge(x = ctrl, y = stim, add.cell.ids = c('ctrl', 'stim'), merge.data = FALSE)
-gcdata <- Seurat::NormalizeData(gcdata)
-var.genes <- Seurat::SelectIntegrationFeatures(SplitObject(gcdata, split.by = 'stim'), nfeatures = 2000, verbose = TRUE, fvf.nfeatures = 2000, selection.method = 'vst')
-gcdata <- Seurat::ScaleData(gcdata, features = var.genes)
-gcdata <- Seurat::RunPCA(gcdata, features = var.genes, npcs = 40, ndims.print = 1:5, nfeatures.print = 5)
-gcdata <- Seurat::FindNeighbors(gcdata, reduction = 'pca', dims = 1:20, k.param = 20)
-gcdata <- Seurat::FindClusters(gcdata)      # optimal resolution = 1.1
-gcdata <- Seurat::RunUMAP(gcdata, dims = 1:20, reduction = 'pca', n.neighbors = 15, min.dist = 0.5, spread = 1, metric = 'euclidean', seed.use = 1)  
-#p1 <- Seurat::DimPlot(gcdata, reduction = 'umap', group.by = 'stim')
-#p2 <- Seurat::DimPlot(gcdata, reduction = 'umap', group.by = 'seurat_annotations')
-#table(Idents(gcdata), gcdata$stim)
+rcdata <- merge(x = ctrl, y = stim, add.cell.ids = c('ctrl', 'stim'), merge.data = FALSE)
+rcdata <- Seurat::NormalizeData(rcdata)
+var.genes <- Seurat::SelectIntegrationFeatures(SplitObject(rcdata, split.by = 'stim'), nfeatures = 2000, verbose = TRUE, fvf.nfeatures = 2000, selection.method = 'vst')
+rcdata <- Seurat::ScaleData(rcdata, features = var.genes)
+rcdata <- Seurat::RunPCA(rcdata, features = var.genes, npcs = 40, ndims.print = 1:5, nfeatures.print = 5)
+rcdata <- Seurat::FindNeighbors(rcdata, reduction = 'pca', dims = 1:20, k.param = 20)
+rcdata <- Seurat::FindClusters(rcdata)      # optimal resolution = 1.1
+rcdata <- Seurat::RunUMAP(rcdata, dims = 1:20, reduction = 'pca', n.neighbors = 15, min.dist = 0.5, spread = 1, metric = 'euclidean', seed.use = 1)  
+#p1 <- Seurat::DimPlot(rcdata, reduction = 'umap', group.by = 'stim')
+#p2 <- Seurat::DimPlot(rcdata, reduction = 'umap', group.by = 'seurat_annotations')
+#table(Idents(rcdata), rcdata$stim)
 
 
 # ADJUSTED RAND INDEX - BATCH MIXING
-ari <- dplyr::select(gcdata[[]], stim, seurat_clusters)
+ari <- dplyr::select(rcdata[[]], stim, seurat_clusters)
 ari$stim <- plyr::mapvalues(ari$stim, from = c('CTRL', 'STIM'), to = c(0, 1))
 pdfCluster::adj.rand.index(as.numeric(ari$stim), as.numeric(ari$seurat_clusters))         #0.1646627
 
 
 # ADJUSTED RAND INDEX - CELL PURITY
-ari <- dplyr::select(gcdata[[]], seurat_annotations, seurat_clusters)
+ari <- dplyr::select(rcdata[[]], seurat_annotations, seurat_clusters)
 ari$seurat_annotations <- plyr::mapvalues(ari$seurat_annotations,
                                 from = c('B', 'B Activated', 'CD14 Mono', 'CD16 Mono', 'CD4 Memory T', 'CD4 Naive T', 'CD8 T', 'DC', 'Eryth', 'Mk', 'NK', 'pDC', 'T activated'),
                                 to = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12))
@@ -54,13 +54,13 @@ pdfCluster::adj.rand.index(as.numeric(ari$seurat_annotations), as.numeric(ari$se
 
 # AVERAGE SILHOUETTE WIDTH (ASW)
 library(cluster, quietly = TRUE)
-dist.matrix <- dist(x = Embeddings(object = gcdata@reductions[['pca']])[, 1:30])
-sil.stim <- silhouette(x = as.numeric(x = as.factor(x = gcdata$stim)), dist = dist.matrix)
-gcdata$sil.stim <- sil.stim[, 3]
-sil.seurat_annotations <- silhouette(x = as.numeric(x = as.factor(x = gcdata$seurat_annotations)), dist = dist.matrix)
-gcdata$sil.seurat_annotations <- sil.seurat_annotations[, 3]
-mean(gcdata$sil.stim)                       #0.09839579
-mean(gcdata$sil.seurat_annotations)         #0.1479373
+dist.matrix <- dist(x = Embeddings(object = rcdata@reductions[['pca']])[, 1:30])
+sil.stim <- silhouette(x = as.numeric(x = as.factor(x = rcdata$stim)), dist = dist.matrix)
+rcdata$sil.stim <- sil.stim[, 3]
+sil.seurat_annotations <- silhouette(x = as.numeric(x = as.factor(x = rcdata$seurat_annotations)), dist = dist.matrix)
+rcdata$sil.seurat_annotations <- sil.seurat_annotations[, 3]
+mean(rcdata$sil.stim)                       #0.09839579
+mean(rcdata$sil.seurat_annotations)         #0.1479373
 
 ####################### SEURAT CCA #############################################
 
@@ -87,8 +87,7 @@ pdfCluster::adj.rand.index(as.numeric(ari$stim), as.numeric(ari$seurat_clusters)
 # ADJUSTED RAND INDEX - CELL PURITY
 ari <- dplyr::select(ifnb.integrated[[]], seurat_annotations, seurat_clusters)
 ari$seurat_annotations <- plyr::mapvalues(ari$seurat_annotations,
-                                          from = c('B', 'B Activated', 'CD14 Mono', 'CD16 Mono', 'CD4 Memory T', 'CD4 Naive T', 'CD8 T', 'DC',
-                                          'Eryth', 'Mk', 'NK', 'pDC', 'T activated'),
+                                          from = c('B', 'B Activated', 'CD14 Mono', 'CD16 Mono', 'CD4 Memory T', 'CD4 Naive T', 'CD8 T', 'DC', 'Eryth', 'Mk', 'NK', 'pDC', 'T activated'),
                                           to = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12))
 pdfCluster::adj.rand.index(as.numeric(ari$seurat_annotations), as.numeric(ari$seurat_clusters))       #0.6801388
 # optimal resolution = 0.4, ari = 0.001772502, 0.8674212
@@ -123,8 +122,7 @@ pdfCluster::adj.rand.index(as.numeric(ari$stim), as.numeric(ari$seurat_clusters)
 # ADJUSTED RAND INDEX - CELL PURITY
 ari <- dplyr::select(mnn.seurat[[]], seurat_annotations, seurat_clusters)
 ari$seurat_annotations <- plyr::mapvalues(ari$seurat_annotations,
-                                          from = c('B', 'B Activated', 'CD14 Mono', 'CD16 Mono', 'CD4 Memory T', 'CD4 Naive T', 'CD8 T', 'DC',
-                                          'Eryth', 'Mk', 'NK', 'pDC', 'T activated'),
+                                          from = c('B', 'B Activated', 'CD14 Mono', 'CD16 Mono', 'CD4 Memory T', 'CD4 Naive T', 'CD8 T', 'DC', 'Eryth', 'Mk', 'NK', 'pDC', 'T activated'),
                                           to = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12))
 pdfCluster::adj.rand.index(as.numeric(ari$seurat_annotations), as.numeric(ari$seurat_clusters))       #0.6601445
 # optimal resolution = 0.9, ari = 0.09400809, 0.6614772
@@ -144,7 +142,7 @@ mean(mnn.seurat$sil.seurat_annotations)       #0.1730848
 
 liger <- Seurat::NormalizeData(ifnb)
 liger <- Seurat::FindVariableFeatures(liger)
-var.liger <- Seurat::SelectIntegrationFeatures(Seurat::SplitObject(liger, split.by = 'stim'), nfeatures = 2000, fvf.nfeatures = 2000, selection.method = 'vst')
+var.liger <- Seurat::SelectIntegrationFeatures(Seurat::SplitObject(liger, split.by = 'stim'), nfeatures = 2000, verbose = TRUE, fvf.nfeatures = 2000, selection.method = 'vst')
 liger <- Seurat::ScaleData(liger, split.by = 'stim', features = var.liger)
 liger <- RunOptimizeALS(liger, k = 30, split.by = 'stim', do.center = FALSE)
 liger <- RunQuantileNorm(liger, split.by = 'stim')
@@ -164,8 +162,7 @@ pdfCluster::adj.rand.index(as.numeric(ari$stim), as.numeric(ari$seurat_clusters)
 # ADJUSTED RAND INDEX - CELL PURITY
 ari <- dplyr::select(liger[[]], seurat_annotations, seurat_clusters)
 ari$seurat_annotations <- plyr::mapvalues(ari$seurat_annotations,
-                                          from = c('B', 'B Activated', 'CD14 Mono', 'CD16 Mono', 'CD4 Memory T', 'CD4 Naive T', 'CD8 T', 'DC',
-                                          'Eryth', 'Mk', 'NK', 'pDC', 'T activated'),
+                                          from = c('B', 'B Activated', 'CD14 Mono', 'CD16 Mono', 'CD4 Memory T', 'CD4 Naive T', 'CD8 T', 'DC', 'Eryth', 'Mk', 'NK', 'pDC', 'T activated'),
                                           to = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12))
 pdfCluster::adj.rand.index(as.numeric(ari$seurat_annotations), as.numeric(ari$seurat_clusters))       #0.6897115
 # optimal resolution = 1, ari = 0.0003552363, 0.7005685
@@ -184,7 +181,7 @@ mean(liger$sil.seurat_annotations)        #0.02560169
 
 ####################### ANALYSIS GRAPHS ########################################
 
-ari.df <- data.frame(x= c(0.594295, 0.8674212, 0.6614772, 0.7005685), y = c(0.8392904, 0.998227498, 0.90599191, 0.9996447637),names = c('Raw', 'Seurat CCA', 'fastMNN', 'LIGER'))
+ari.df <- data.frame(x= c(0.594295, 0.8674212, 0.6614772, 0.7005685), y = c(0.8392904, 0.998227498, 0.90599191, 0.9996447637), names = c('Raw', 'Seurat CCA', 'fastMNN', 'LIGER'))
 asw.df <- data.frame(x = c(0.1479373, 0.1555964, 0.06459867, 0.02560169), y = c(0.90160421, 0.98472071, 0.95743892, 0.996748365), names = c('Raw', 'Seurat CCA', 'fastMNN', 'LIGER'))
 
 library(ggplot2)
@@ -208,5 +205,5 @@ ggplot2::ggplot(asw.df, aes(x,y)) + geom_text_repel(aes(label = names), hjust = 
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.border = element_blank(),
-        panel.background = element_blank()) 
+        panel.background = element_blank())
 

@@ -9,7 +9,8 @@
 #library(scran)
 #library(devtools)
 
-# first run test - after learning Seurat through SatijaLab, testing different approaches of methodologies
+# first run test - after learning Seurat through SatijaLab, testing different approaches of the methodologies
+# warning: chaotic code, not sure what works and doesn't work, just figuring out how the objects behave
 
 ####################### PBMC DATA - SEURAT OBJECT ##############################
 
@@ -17,14 +18,14 @@ pbmc.data <- Seurat::Read10X(data.dir = 'pbmc/')
 pbmc <- Seurat::CreateSeuratObject(counts = pbmc.data, project = 'pbmc3k', min.cells = 3, min.features = 200)
 #pbmc <- Seurat::VlnPlot(pbmc, features = c('nFeature_RNA', 'nCount_RNA', 'percent.mt'), ncol = 3)
 pbmc <- Seurat::NormalizeData(pbmc)
-pbmc <- Seurat::FindVariableFeatures(pbmc, selection.method = 'vst', nfeatures = 2000)#'PPBP', 'LYZ', 'S100A9', 'FTL', 'GNLY', 'IGLL5'
+pbmc <- Seurat::FindVariableFeatures(pbmc, selection.method = 'vst', nfeatures = 2000)  #'PPBP', 'LYZ', 'S100A9', 'FTL', 'GNLY', 'IGLL5'
 pbmc <- Seurat::ScaleData(pbmc, features = rownames(pbmc))
 pbmc <- Seurat::RunPCA(pbmc, pc.genes = pbmc@var.genes)
 pbmc <- Seurat::FindNeighbors(pbmc)
 pbmc <- Seurat::RunUMAP(pbmc, dim = 1:10)
 pbmc <- Seurat::FindClusters(pbmc, reduction='pca')
 pbmc <- Seurat::RunTSNE(pbmc, reduction='pca')
-Seurat::DimPlot(pbmc, reduction = 'tsne')                                   #VISUALIZATION WITHOUT BATCH CORRECTION
+Seurat::DimPlot(pbmc, reduction = 'tsne')
 
 ####################### PBMC DATA - SINGLE CELL OBJECT #########################
 
@@ -33,9 +34,9 @@ test1 <- subset(x = test, cells = colnames(x = pbmc)[1:1000])
 test2 <- subset(x = test, cells = colnames(x = pbmc)[1001:2000])
 test1 <- Seurat::as.SingleCellExperiment(test1)
 test2 <- Seurat::as.SingleCellExperiment(test2)
-universe <- intersect(rownames(test1), rownames(test2))
-test1 <- test1[universe,]                                     #subset the SingleCellExperiment object
-test2 <- test2[universe,]
+combined <- intersect(rownames(test1), rownames(test2))
+test1 <- test1[combined,]                                     #subset the SingleCellExperiment object
+test2 <- test2[combined,]
 
 
 var1 <- scran::modelGeneVar(Seurat::as.SingleCellExperiment(pbmc1))
@@ -50,7 +51,6 @@ test2 <- rescaled[[2]]
 test1$batch <- 'test1'
 test2$batch <- 'test2'
 uncorrected <- cbind(test1, test2)
-set.seed(0010101010)
 uncorrected <- scater::runPCA(uncorrected, subset_row = chosen.hvgs, BSPARAM=BiocSingular::RandomParam(deferred=TRUE))
 snn.uncorrected <- scran::buildSNNGraph(uncorrected, use.dimred = 'PCA')
 clusters <- igraph::cluster_walktrap(snn.uncorrected)$membership
@@ -100,8 +100,6 @@ liger.pbmc <- rliger::runUMAP(liger.pbmc)
 rliger::plotClusterProportions(liger.pbmc)
 #rliger::plotClusterFactors(liger.pbmc, use.aligned = T)
 markers <- rliger::getFactorMarkers(liger.pbmc, dataset1 = 'pbmc1', dataset2 = 'pbmc2', num.genes = 10)
-
-
 liger.pbmc <- rliger::plotGeneLoadings(liger.pbmc, do.spec.plot=FALSE, return.plots=TRUE)
 rliger::plotGene(liger.pbmc, gene = 'PPBP')
 rliger::plotGeneViolin(liger.pbmc, gene = 'PPBP')
